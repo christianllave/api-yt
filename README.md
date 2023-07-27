@@ -49,9 +49,49 @@ Files accessing the API (Files 1, 3, 4, 6) have a function designed to access th
 
 One mechanism placed on the JSON-to-text storage process is the deletion of text files from past runs. Otherwise, new queries would stack on top of previous search results, and the data would no longer be representative of the study of the core query. This is for this process to be focused on one core query, but that process can be removed in future research that focuses on more core queries. One may argue using a write instead of append when opening the file; however, that would have taken away from experimenting on scalability. 
 
-When storing pulled data from text or JSON into SQLITE, there is an option for the SQL command to either update or insert, which is to enable scaling and updating in future developments. For numerical metrics such as view_count, like_count, and comment_count, they are converted to 0 if they are not present. This is to enable processing.
+When storing pulled data from text or JSON into SQLITE, there is an option for the SQL command to either update or insert, which is to enable scaling and updating in future developments. For numerical metrics such as `view_count`, `like_count`, and `comment_count`, they are converted to 0 if they are not present. This is to enable processing.
 
-By combining rank and video_id from search_results with metrics from video_data, a graph of view count and engagement rate for each video arranged by rank can be produced. This was done by joining them using a SQL query and converted to a Pandas dataframe. While not a comprehensive metric of engagement, engagement_rate was calculated by adding like_count and comment_count and then dividing the sum by view_count. This metric was appended to the dataframe, which was then reduced to contain only details relevant to the plot. The reduced dataframe is then plotted on Matplotlib.
+By combining `rank` and `video_id` from *search_results* with metrics from *video_data*, a graph of view count and engagement rate for each video arranged by rank can be produced. This was done by joining them using a SQL query and converted to a Pandas dataframe. While not a comprehensive metric of engagement, `engagement_rate` was calculated by adding `like_count` and `comment_count` and then dividing the sum by `view_count`. This metric was appended to the dataframe, which was then reduced to contain only details relevant to the plot. The reduced dataframe is then plotted on Matplotlib.
 
-To examine connections between videos and related videos, data from related_searches is transformed into a Pandas dataframe, and used to define edges and nodes on a network graph using Networkx. 
+To examine connections between videos and related videos, data from *related_searches* is transformed into a Pandas dataframe, and used to define edges and nodes on a network graph using Networkx. 
 
+### Challenges and workarounds
+Google [outlines how users consume quotas](https://developers.google.com/youtube/v3/determine_quota_cost) based on the kind of resource accessed. For a free tier user, the maximum quota limit per day is 10,000. For this project, the main resources are search>list, videos>list, and channels>list. Search>list consumes 100 of the quota allocations for each request, while video>list and channel>list requests only consume 1. Opening succeeding pages of the search results also consumes quotas as a Search>list resource. Table 1 lists the challenges due to quota limits, and corresponding workarounds.
+
+Table 1. Challenges and workarounds from quota limits
+
+![COSC480 Project Report - Llave (2)](https://github.com/christianllave/api-yt/assets/70957302/88a77312-1ddc-4263-897f-79f1a29313a5)
+
+While the quota limit was restrictive, this allowed for the development process to focus on the minimum viable output, and make optimizations to how each request is created. One such optimization was the use of batch requests for video and channel data. Another instance was the use of list filtering to prevent existing video ids from being used in new search requests.
+
+The network graph also had the challenge of having a neater graph; however, because the visualization is for demonstrating potential as a minimum viable output, it was kept as is, as this could be fixed by using a different library. There were also too many relationships to properly plot, so in the notebook and Python file, the rows of relationships to graph were restricted. Future research can use libraries such as plotly to create a more intricate graph. 
+
+## How to run the project
+### Libraries and software
+This project makes use of the following libraries:
+• json: Parsing and transforming JSON data from the API.
+• ssl: Creating SSLContext to use when opening URLs.
+• urllib: Appending parameters to URLs and opening them.
+• time: Set intervals between API calls.
+• os: Set local storage for writing and reading text files.
+• sqlite3: Storing and accessing parsed JSON data.
+• pandas: Creating dataframes from SQLITE data, and preparing data for plotting. 
+• matplotlib: Plotting data along an x,y axis.
+• networkx: Building a network graph.
+
+While not mandatory, the use of [DB Browser for SQLITE](https://sqlitebrowser.org/) allows users to view the contents of their database for checking, and testing queries.
+
+### API Access
+One key dependency for this project is the use of Youtube Data API. Google provides a [guide to get started](https://developers.google.com/youtube/v3/getting-started), including the creation of credentials. Once an API Key has been secured, plug in the API Key onto the API variable on the Python files. For a lean execution, this project used API Keys instead of OAuth, and opted not to use a client library. 
+
+### Running the project files
+Provided Python files can be run on an IDE such as Visual Studio Code. It would be good to keep the Python files and SQLITE files in one folder for easy access. For the visualization, two notebooks have been provided based on files 8 and 9. The global variables to set are the `KEY` and `SAVEPATH` variables, as they are specific to the user. The `LIMITER` variable can be adjusted but is primarily used as a control to prevent starting too many search requests. Some lines can be uncommented or commented such as those with `DROP TABLE` and `os.remove`, if users wish to reset the table and the text file generated. 
+
+For files *1_searching_videos* and *3_searching_related_videos*, an input will be required from the user. For this project, the query used was ‘genshin’. 
+
+## Future Developments
+The immediately actionable step in the project is to create further visualizations from the data. Creating a network graph between channels from base videos and channels from related videos can be an extension of the related videos network graph. An improvement to visualizations would have an interactive graph library so users can zoom in and out or view details of a selected node.
+
+In terms of improvements to data gathering, the potential hinges mostly on the ability to increase the quota.  This will allow users to remove the `LIMITER` variable, and get the full dataset for a period of time.
+
+In terms of what users can do with the data, applying data mining techniques on the other variables, such as regression, can be used to understand how the ranking and related videos system is done. Topic modeling can be used to identify sub-niches in the topic at hand. Classification models can also be trained from video and channel metadata to classify videos by sub-niches within the topic and quantify them to guide prospective content creators on the gaps in the content sphere for that topic.
