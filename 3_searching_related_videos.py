@@ -2,6 +2,9 @@
 get related videos of the first 10 videos
 that have not gone through this process yet."""
 
+# Note: On June 12, 2023 Youtube has deprecated the relatedToVideoId parameter, and stopped working on August 7, 2023
+# https://developers.google.com/youtube/v3/revision_history#june-12,-2023
+
 import json
 import ssl
 import urllib.request, urllib.parse, urllib.error
